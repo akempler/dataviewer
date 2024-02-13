@@ -76,15 +76,18 @@ if "dataframe" in locals():
 
     st.write("Record count: ", dataframe.shape[0])
 
-    tab1, tab2 = st.tabs(["Data Table", "Raw Json"])
+    # Only show the tabs if it is a json file.
+    if "json_file" in locals():
+      tab1, tab2 = st.tabs(["Data Table", "Raw Json"])
+      with tab1:
+        st.write("Column count: ", dataframe.shape[1])
+        st.write(dataframe)
 
-    with tab1:
+      with tab2:
+        st.json(json_file, expanded=False)
+    else:
       st.write("Column count: ", dataframe.shape[1])
       st.write(dataframe)
-
-    with tab2:
-      st.json(json_file, expanded=False)
-      
 
   if page == "Duplicates":
     with st.form("duplicate"):
