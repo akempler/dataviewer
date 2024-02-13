@@ -83,13 +83,6 @@ if "dataframe" in locals():
       st.write(dataframe)
 
     with tab2:
-      #json = json.load(uploaded_file)
-      #json = json.loads(dataframe.to_json(orient='records', lines=True))
-      # st.write(dataframe.to_json(orient='records', lines=True))
-      # json = dataframe.to_json(orient='records', lines=True)
-      # Add the json to a json array.
-      # json = f'[{json}]'
-      #st.code(json)
       st.json(json_file, expanded=False)
       
 
