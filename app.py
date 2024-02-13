@@ -69,6 +69,7 @@ with st.sidebar:
 
 if "dataframe" in locals():
   if page == "Overview":
+    st.subheader("Data Overview")
 
     st.write("Record count: ", dataframe.shape[0])
     st.write("Column count: ", dataframe.shape[1])
@@ -77,6 +78,7 @@ if "dataframe" in locals():
 
   if page == "Duplicates":
     with st.form("duplicate"):
+      st.subheader("Duplicate Values Finder")
       # Show a sampling of the data.
       sampling = dataframe.sample(3)
       st.write("Random sample of data:")
@@ -96,6 +98,7 @@ if "dataframe" in locals():
 
   if page == "Unique":
     with st.form("unique"):
+      st.subheader("Unique Values Finder")
       # Show a sampling of the data.
       sampling = dataframe.sample(3)
       st.write("Random sample of data:")
@@ -112,8 +115,13 @@ if "dataframe" in locals():
         st.write("Unique data:")
         st.write(uniqueRows)
 
+        counts = dataframe[option].value_counts()
+        st.write("Value counts:")
+        st.write(counts)
+
   if page == "Sampling":
     with st.form("sampling"):
+      st.subheader("Data Sampler")
       # Show a sampling of the data.
       sampling_number = st.number_input('Number of records to sample', min_value=1, max_value=500, value=5)
 

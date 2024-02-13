@@ -2,6 +2,8 @@
 
 Simple proof of concept tool to view csv and json files, built with Streamlit.
 
+Primary use-case is for reviewing data intended for migrations into Drupal.
+
 Provides some standard data insight:
 - Browse and search records.
 - Find duplicate values in a column.
