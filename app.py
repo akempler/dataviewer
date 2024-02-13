@@ -52,7 +52,10 @@ with st.sidebar:
   if uploaded_file is not None:
     
     if uploaded_file.name.endswith('.json'):
-      dataframe = pd.read_json(uploaded_file)
+      # dataframe = pd.read_json(uploaded_file)
+      # Avoid using read_json as it does not handle nested json well.
+      json_file = json.load(uploaded_file)
+      dataframe = json_normalize(json_file)
     elif uploaded_file.name.endswith('.csv'):
       dataframe = pd.read_csv(uploaded_file)
     else:
@@ -72,9 +75,23 @@ if "dataframe" in locals():
     st.subheader("Data Overview")
 
     st.write("Record count: ", dataframe.shape[0])
-    st.write("Column count: ", dataframe.shape[1])
 
-    st.write(dataframe)
+    tab1, tab2 = st.tabs(["Data Table", "Raw Json"])
+
+    with tab1:
+      st.write("Column count: ", dataframe.shape[1])
+      st.write(dataframe)
+
+    with tab2:
+      #json = json.load(uploaded_file)
+      #json = json.loads(dataframe.to_json(orient='records', lines=True))
+      # st.write(dataframe.to_json(orient='records', lines=True))
+      # json = dataframe.to_json(orient='records', lines=True)
+      # Add the json to a json array.
+      # json = f'[{json}]'
+      #st.code(json)
+      st.json(json_file, expanded=False)
+      
 
   if page == "Duplicates":
     with st.form("duplicate"):
