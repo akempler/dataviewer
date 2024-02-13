@@ -69,8 +69,7 @@ with st.sidebar:
 
 if "dataframe" in locals():
   if page == "Overview":
-    # st.write("home is where the heart is")
-    st.write(dataframe.shape)
+
     st.write("Record count: ", dataframe.shape[0])
     st.write("Column count: ", dataframe.shape[1])
 
