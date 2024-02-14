@@ -19,7 +19,8 @@ menu = [
   'Overview',
   'Duplicates',
   'Unique',
-  'Sampling'
+  'Sampling',
+  'Data Dictionary'
 ]
 
 with st.sidebar:
@@ -47,7 +48,7 @@ with st.sidebar:
   st.sidebar.markdown(heading, unsafe_allow_html=True)
 
 
-  uploaded_file = st.file_uploader("Choose a file")
+  uploaded_file = st.file_uploader("Upload a file:", type=["csv", "json"])
 
   if uploaded_file is not None:
     
@@ -144,9 +145,37 @@ if "dataframe" in locals():
         sampling = dataframe.sample(sampling_number)
         st.write(sampling)
 
+  if page == "Data Dictionary":
+    st.subheader("Create a Data Dictionary")
+    # Create a sampling of the data to use as example data for the dictionary.
+    st.write("Create an example data dictionary for the data.")
+    st.write("Download the dictionary as a csv file by hovering over the table header and clicking the download icon.")
+    st.write("You can then upload the file to Google Docs.")
+
+    sampling = dataframe.sample(3)
+
+    cols_list = dataframe.columns.tolist()
+
+    dict_dataframe = pd.DataFrame(columns=['Field Name', 'Data Type', 'Description', 'Sample Data'])
+
+    for col in cols_list:
+      samples = sampling[col].values
+      # Unfortunatly, the newline character is not being rendered in the table unless you doubleclick in the cell.
+      # It does export correctly.
+      samples_string = ' | \n\n'.join(samples)
+      new_row = {'Field Name': col, 'Data Type': [''], 'Description': [''], 'Sample Data': [samples_string]}
+      new_row_dataframe = pd.DataFrame.from_dict(new_row)
+      dict_dataframe = pd.concat([dict_dataframe, new_row_dataframe], ignore_index=True)
+
+    st.write(dict_dataframe)
+
 else:
-  st.title("")
-  st.subheader("No data to display")
-  st.write("Upload a json or csv file to start viewing data.")
+  # Default welcome screen.
+  st.header("A simple csv / json data viewer")
+  st.write("a useful tool for reviewing source data for Drupal and other CMS migrations and integrations.")
+
+  container = st.container(border=True)
+  container.subheader("No data to display")
+  container.info("Use the file upload form to get started.")
 
     

@@ -24,3 +24,4 @@ https://simple-dataviewer.streamlit.app/
 - Allow selection of a column for random sampling to select different values off of.
 - Find null/empty/0 values, along with a count of those values.
 - Search for PII data.
+- Allow column and value editing for the Data Dictionary dataframe.
