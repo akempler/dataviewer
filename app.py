@@ -6,8 +6,10 @@ import numpy as np
 import json
 from pathlib import Path
 from io import StringIO
+import io
 import mimetypes
 from streamlit_option_menu import option_menu
+import xlsxwriter
 
 st.set_page_config(
     page_title="Data Viewer",
@@ -168,6 +170,25 @@ if "dataframe" in locals():
       dict_dataframe = pd.concat([dict_dataframe, new_row_dataframe], ignore_index=True)
 
     st.write(dict_dataframe)
+
+    newfilename = uploaded_file.name.split('.')[0] + '_dd'
+    newfilename = newfilename.replace(" ", "_")
+    newfilename = newfilename.lower()
+    # add the date to the filename
+    newfilename = newfilename + '_' + pd.to_datetime('today').strftime('%Y%m%d') + '.xlsx'
+
+    # buffer to use for excel writer
+    buffer = io.BytesIO()
+
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+      dict_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
+      writer.close()
+      exportbtn = st.download_button(
+          label="Download data as Excel",
+          data=buffer,
+          file_name=newfilename,
+          mime='application/vnd.ms-excel'
+    )
 
 else:
   # Default welcome screen.
