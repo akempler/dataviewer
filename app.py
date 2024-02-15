@@ -9,7 +9,6 @@ from io import StringIO
 import io
 import mimetypes
 from streamlit_option_menu import option_menu
-import xlsxwriter
 
 st.set_page_config(
     page_title="Data Viewer",
