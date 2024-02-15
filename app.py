@@ -181,7 +181,11 @@ if "dataframe" in locals():
     buffer = io.BytesIO()
 
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-      dict_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
+      
+    # Create a dataframe with the filename and current date:
+      info_dataframe = pd.DataFrame({'Filename': [uploaded_file.name], 'Date': [pd.to_datetime('today').strftime('%Y-%m-%d')]})
+      info_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
+      dict_dataframe.to_excel(writer, sheet_name='Sheet1', startrow=4, index=False)
       writer.close()
       exportbtn = st.download_button(
           label="Download data as Excel",
