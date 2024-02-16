@@ -21,6 +21,7 @@ menu = [
   'Overview',
   'Duplicates',
   'Unique',
+  'Empty',
   'Sampling',
   'Data Dictionary'
 ]
@@ -135,6 +136,25 @@ if "dataframe" in locals():
         st.write("Value counts:")
         st.write(counts)
 
+  if page == "Empty":
+    with st.form("empty"):
+      st.subheader("Empty Values Finder")
+      # Show a sampling of the data.
+      sampling = dataframe.sample(3)
+      st.write("Random sample of data:")
+      st.write(sampling)
+      
+      option = st.selectbox('Select a column to find empty values on.', dataframe.columns)
+
+      submitted = st.form_submit_button("Find")
+
+      if submitted:
+        empty_cells = dataframe[(dataframe[option] == '') | (dataframe[option].isnull()) | (dataframe[option] == ' ')]
+
+        num_cells = len(empty_cells)
+        st.write("Record count: ", dataframe.shape[0])
+        st.write("Number of empty records: ", num_cells)
+
   if page == "Sampling":
     with st.form("sampling"):
       st.subheader("Data Sampler")
@@ -153,12 +173,14 @@ if "dataframe" in locals():
     st.write("Create an example data dictionary for the data.")
     st.write("Download the dictionary as a csv file by hovering over the table header and clicking the download icon.")
     st.write("You can then upload the file to Google Docs.")
+    st.write("Alternatively you can download the dictionary as an Excel file.")
 
-    
-
+    # Show a sampling of the data.
+    sampling = dataframe.sample(3)
+    st.write("Random sample of data:")
+    st.write(sampling)
 
     cols_list = dataframe.columns.tolist()
-
 
     with st.form("sampling_method"):
 
@@ -197,17 +219,32 @@ if "dataframe" in locals():
             # add a random sample of the data to the sampleset
             sampleset[col] = dataframe[col].sample(3)
 
-      dict_dataframe = pd.DataFrame(columns=['Field Name', 'Data Type', 'Description', 'Sample Data'])
+      dict_dataframe = pd.DataFrame(columns=[
+        'Field Name', 
+        'Data Type', 
+        'Null', 
+        'Default Value', 
+        'Description', 
+        'Sample Data', 
+        'Questions'])
 
       for col in cols_list:
         samples = sampleset[col].values
         try:
-          samples_string = ' | \n\n'.join(samples)
+          samples_string = ' | \n'.join(samples)
         except:
           samples = samples.flatten()
-          samples_string = ' | \n\n'.join(samples)
+          samples_string = ' | \n'.join(samples)
         
-        new_row = {'Field Name': col, 'Data Type': [''], 'Description': [''], 'Sample Data': [samples_string]}
+        new_row = {
+          'Field Name': col, 
+          'Data Type': [''], 
+          'Null': [''], 
+          'Default Value': [''], 
+          'Description': [''], 
+          'Sample Data': [samples_string], 
+          'Questions': ['']
+          }
         new_row_dataframe = pd.DataFrame.from_dict(new_row)
         dict_dataframe = pd.concat([dict_dataframe, new_row_dataframe], ignore_index=True)
 
@@ -224,9 +261,8 @@ if "dataframe" in locals():
       buffer = io.BytesIO()
 
       with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        
-      # Create a dataframe with the filename and current date:
-        info_dataframe = pd.DataFrame({'Filename': [uploaded_file.name], 'Date': [pd.to_datetime('today').strftime('%Y-%m-%d')]})
+        # Create a dataframe with the filename and current date:
+        info_dataframe = pd.DataFrame({'Info': [uploaded_file.name] + ' - ' + pd.to_datetime('today').strftime('%Y-%m-%d')})
         info_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
         dict_dataframe.to_excel(writer, sheet_name='Sheet1', startrow=4, index=False)
         writer.close()
