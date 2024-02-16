@@ -186,7 +186,6 @@ if "dataframe" in locals():
             # add the unique values to the sampleset
             unique = dataframe[col].unique()
             count = len(unique)
-            st.write(count)
             if count >= 1 and count < 3:
               sample_list = random.sample(list(unique), count)
             else:
