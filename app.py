@@ -262,7 +262,8 @@ if "dataframe" in locals():
 
       with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
         # Create a dataframe with the filename and current date:
-        info_dataframe = pd.DataFrame({'Info': [uploaded_file.name] + ' - ' + pd.to_datetime('today').strftime('%Y-%m-%d')})
+        # info_dataframe = pd.DataFrame({'Info': [uploaded_file.name] + ' - ' + pd.to_datetime('today').strftime('%Y-%m-%d')})
+        info_dataframe = pd.DataFrame({'Info': [uploaded_file.name]})
         info_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
         dict_dataframe.to_excel(writer, sheet_name='Sheet1', startrow=4, index=False)
         writer.close()
