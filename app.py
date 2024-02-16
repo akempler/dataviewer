@@ -9,6 +9,7 @@ from io import StringIO
 import io
 import mimetypes
 from streamlit_option_menu import option_menu
+import random
 
 st.set_page_config(
     page_title="Data Viewer",
@@ -153,45 +154,89 @@ if "dataframe" in locals():
     st.write("Download the dictionary as a csv file by hovering over the table header and clicking the download icon.")
     st.write("You can then upload the file to Google Docs.")
 
-    sampling = dataframe.sample(3)
+    
+
 
     cols_list = dataframe.columns.tolist()
 
-    dict_dataframe = pd.DataFrame(columns=['Field Name', 'Data Type', 'Description', 'Sample Data'])
 
-    for col in cols_list:
-      samples = sampling[col].values
-      # Unfortunatly, the newline character is not being rendered in the table unless you doubleclick in the cell.
-      # It does export correctly.
-      samples_string = ' | \n\n'.join(samples)
-      new_row = {'Field Name': col, 'Data Type': [''], 'Description': [''], 'Sample Data': [samples_string]}
-      new_row_dataframe = pd.DataFrame.from_dict(new_row)
-      dict_dataframe = pd.concat([dict_dataframe, new_row_dataframe], ignore_index=True)
+    with st.form("sampling_method"):
 
-    st.write(dict_dataframe)
+      help = '''
+      By default, the samplings will be just random samplings of data in the column. 
+      Select the columns you want to use unique sampling for. 
+      This is appropriate for columns that have a limited number of unique values such as taxonomies.
+      '''
+      st.write(help)
 
-    newfilename = uploaded_file.name.split('.')[0] + '_dd'
-    newfilename = newfilename.replace(" ", "_")
-    newfilename = newfilename.lower()
-    # add the date to the filename
-    newfilename = newfilename + '_' + pd.to_datetime('today').strftime('%Y%m%d') + '.xlsx'
+      sampling_options = st.multiselect(
+        'Which columns should use unique sampling?',
+        cols_list,
+        placeholder="Select columns")
 
-    # buffer to use for excel writer
-    buffer = io.BytesIO()
+      sampling_submitted = st.form_submit_button("Create Data Dictionary")
 
-    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-      
-    # Create a dataframe with the filename and current date:
-      info_dataframe = pd.DataFrame({'Filename': [uploaded_file.name], 'Date': [pd.to_datetime('today').strftime('%Y-%m-%d')]})
-      info_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
-      dict_dataframe.to_excel(writer, sheet_name='Sheet1', startrow=4, index=False)
-      writer.close()
-      exportbtn = st.download_button(
-          label="Download data as Excel",
-          data=buffer,
-          file_name=newfilename,
-          mime='application/vnd.ms-excel'
-    )
+    if sampling_submitted:
+
+      sampleset = {}
+      # Loop through cols_list and create a sample of the data for each column:
+      for col in cols_list:
+          # check if the column is in the sampling_options list
+          if col in sampling_options:
+            # add the unique values to the sampleset
+            unique = dataframe[col].unique()
+            count = len(unique)
+            st.write(count)
+            if count >= 1 and count < 3:
+              sample_list = random.sample(list(unique), count)
+            else:
+              sample_list = random.sample(list(unique), 3)
+
+            # create a dataframe from the sample_list
+            sampleset[col] = pd.DataFrame(sample_list, columns=[col])
+          else:
+            # add a random sample of the data to the sampleset
+            sampleset[col] = dataframe[col].sample(3)
+
+      dict_dataframe = pd.DataFrame(columns=['Field Name', 'Data Type', 'Description', 'Sample Data'])
+
+      for col in cols_list:
+        samples = sampleset[col].values
+        try:
+          samples_string = ' | \n\n'.join(samples)
+        except:
+          samples = samples.flatten()
+          samples_string = ' | \n\n'.join(samples)
+        
+        new_row = {'Field Name': col, 'Data Type': [''], 'Description': [''], 'Sample Data': [samples_string]}
+        new_row_dataframe = pd.DataFrame.from_dict(new_row)
+        dict_dataframe = pd.concat([dict_dataframe, new_row_dataframe], ignore_index=True)
+
+      st.write(dict_dataframe)
+
+      # Create a new filename for the data dictionary.
+      newfilename = uploaded_file.name.split('.')[0] + '_dd'
+      newfilename = newfilename.replace(" ", "_")
+      newfilename = newfilename.lower()
+      # add the date to the filename
+      newfilename = newfilename + '_' + pd.to_datetime('today').strftime('%Y%m%d') + '.xlsx'
+
+      # buffer to use for excel writer
+      buffer = io.BytesIO()
+
+      with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        
+      # Create a dataframe with the filename and current date:
+        info_dataframe = pd.DataFrame({'Filename': [uploaded_file.name], 'Date': [pd.to_datetime('today').strftime('%Y-%m-%d')]})
+        info_dataframe.to_excel(writer, sheet_name='Sheet1', index=False)
+        dict_dataframe.to_excel(writer, sheet_name='Sheet1', startrow=4, index=False)
+        writer.close()
+        exportbtn = st.download_button(
+            label="Download data as Excel",
+            data=buffer,
+            file_name=newfilename,
+            mime='application/vnd.ms-excel'
+      )
 
 else:
   # Default welcome screen.
