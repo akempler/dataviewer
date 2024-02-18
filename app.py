@@ -129,8 +129,6 @@ if "dataframe" in locals():
         uniqueRows = dataframe[option].unique()
         num_rows = len(uniqueRows)
         st.write("Record count: ", num_rows)
-        st.write("Unique data:")
-        st.write(uniqueRows)
 
         counts = dataframe[option].value_counts()
         st.write("Value counts:")
@@ -234,7 +232,8 @@ if "dataframe" in locals():
           samples_string = ' | \n'.join(samples)
         except:
           samples = samples.flatten()
-          samples_string = ' | \n'.join(samples)
+          str_samples = [str(x) for x in samples]
+          samples_string = ' | \n'.join(str_samples)
         
         new_row = {
           'Field Name': col, 
