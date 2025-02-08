@@ -10,6 +10,7 @@ import io
 import mimetypes
 from streamlit_option_menu import option_menu
 import random
+import xml.etree.ElementTree as ET
 
 st.set_page_config(
     page_title="Data Viewer",
@@ -51,7 +52,7 @@ with st.sidebar:
   st.sidebar.markdown(heading, unsafe_allow_html=True)
 
 
-  uploaded_file = st.file_uploader("Upload a file:", type=["csv", "json"])
+  uploaded_file = st.file_uploader("Upload a file:", type=["csv", "json", "xml"])
 
   if uploaded_file is not None:
     
@@ -62,6 +63,37 @@ with st.sidebar:
       dataframe = json_normalize(json_file)
     elif uploaded_file.name.endswith('.csv'):
       dataframe = pd.read_csv(uploaded_file)
+    elif uploaded_file.name.endswith('.xml'):
+      # Read the XML file first as a string
+      xml_content = uploaded_file.read()
+      root = ET.fromstring(xml_content)
+      
+      # Create a list to store all rows
+      rows = []
+      
+      # Process each ROW element
+      for row in root.findall('.//ROW'):
+          row_data = {}
+          # Get non-address fields
+          for child in row:
+              if child.tag != 'ADDRESS':
+                  row_data[child.tag] = child.text
+          
+          # Process ADDRESS separately
+          address = row.find('ADDRESS')
+          if address is not None:
+              for child in address:
+                  if child.tag == 'STREET_ADDRESS':
+                      # Handle nested STREET_ADDRESS
+                      address_lines = [line.text for line in child.findall('ADDRESS_LINE') if line.text]
+                      row_data['STREET_ADDRESS'] = ', '.join(address_lines)
+                  else:
+                      row_data[child.tag] = child.text
+          
+          rows.append(row_data)
+      
+      # Create dataframe from processed rows
+      dataframe = pd.DataFrame(rows)
     else:
       st.write("File type not supported")
 
@@ -85,13 +117,23 @@ if "dataframe" in locals():
       tab1, tab2 = st.tabs(["Data Table", "Raw Json"])
       with tab1:
         st.write("Column count: ", dataframe.shape[1])
-        st.write(dataframe)
+        st.dataframe(
+            dataframe,
+            hide_index=False,
+            use_container_width=True,
+            column_config={col: {"width": "auto"} for col in dataframe.columns}
+        )
 
       with tab2:
         st.json(json_file, expanded=False)
     else:
       st.write("Column count: ", dataframe.shape[1])
-      st.write(dataframe)
+      st.dataframe(
+          dataframe,
+          hide_index=False,
+          use_container_width=True,
+          column_config={col: {"width": "auto"} for col in dataframe.columns}
+      )
 
   if page == "Duplicates":
     with st.form("duplicate"):
@@ -275,7 +317,7 @@ if "dataframe" in locals():
 
 else:
   # Default welcome screen.
-  st.header("A simple csv / json data viewer")
+  st.header("A simple csv / json / xml data viewer")
   st.write("a useful tool for reviewing source data for Drupal and other CMS migrations and integrations.")
 
   container = st.container(border=True)

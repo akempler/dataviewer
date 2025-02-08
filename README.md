@@ -15,6 +15,19 @@ Provides some standard data insight:
 
 https://simple-dataviewer.streamlit.app/
 
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the app:
+
+```bash
+streamlit run app.py
+```
+
+
 ## TODO
 
 - Json Explorer for working with nested json files. (in progress)
