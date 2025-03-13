@@ -62,7 +62,11 @@ with st.sidebar:
       json_file = json.load(uploaded_file)
       dataframe = json_normalize(json_file)
     elif uploaded_file.name.endswith('.csv'):
-      dataframe = pd.read_csv(uploaded_file)
+      try:
+        dataframe = pd.read_csv(uploaded_file)
+      except UnicodeDecodeError:
+        # If UTF-8 fails, try reading with 'latin-1' encoding
+        dataframe = pd.read_csv(uploaded_file, encoding='latin-1')
     elif uploaded_file.name.endswith('.xml'):
       # Read the XML file first as a string
       xml_content = uploaded_file.read()
@@ -71,6 +75,8 @@ with st.sidebar:
       # Create a list to store all rows
       rows = []
       
+      # Testing with hard-coded values for now. 
+      # TODO: Replace with abstracted element selection.
       # Process each ROW element
       for row in root.findall('.//ROW'):
           row_data = {}
