@@ -63,10 +63,18 @@ with st.sidebar:
       dataframe = json_normalize(json_file)
     elif uploaded_file.name.endswith('.csv'):
       try:
-        dataframe = pd.read_csv(uploaded_file)
+        # First try reading with default UTF-8 encoding
+        dataframe = pd.read_csv(uploaded_file, header=0)
       except UnicodeDecodeError:
         # If UTF-8 fails, try reading with 'latin-1' encoding
-        dataframe = pd.read_csv(uploaded_file, encoding='latin-1')
+        dataframe = pd.read_csv(uploaded_file, encoding='latin-1', header=0)
+      
+      # If the header looks like data (all numeric), try inferring the header
+      if all(str(col).replace('.', '').isdigit() for col in dataframe.columns):
+        try:
+          dataframe = pd.read_csv(uploaded_file, encoding='latin-1')
+        except UnicodeDecodeError:
+          dataframe = pd.read_csv(uploaded_file)
     elif uploaded_file.name.endswith('.xml'):
       # Read the XML file first as a string
       xml_content = uploaded_file.read()

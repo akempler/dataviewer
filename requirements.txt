@@ -10,3 +10,4 @@ streamlit-option-menu==0.4.0
 watchdog==6.0.0
 XlsxWriter==3.2.2
 xmltodict==0.14.2
+pyinstaller==6.3.0
