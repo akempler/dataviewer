@@ -51,7 +51,7 @@ with st.sidebar:
   st.sidebar.markdown(heading, unsafe_allow_html=True)
 
 
-  uploaded_file = st.file_uploader("Upload a file:", type=["csv", "json"])
+  uploaded_file = st.file_uploader("Upload a file:", type=["csv", "json", "xlsx"])
 
   if uploaded_file is not None:
     
@@ -62,6 +62,8 @@ with st.sidebar:
       dataframe = json_normalize(json_file)
     elif uploaded_file.name.endswith('.csv'):
       dataframe = pd.read_csv(uploaded_file)
+    elif uploaded_file.name.endswith('.xlsx'):
+      dataframe = pd.read_excel(uploaded_file)
     else:
       st.write("File type not supported")
 
@@ -275,7 +277,7 @@ if "dataframe" in locals():
 
 else:
   # Default welcome screen.
-  st.header("A simple csv / json data viewer")
+  st.header("A simple csv / json / Excel data viewer")
   st.write("a useful tool for reviewing source data for Drupal and other CMS migrations and integrations.")
 
   container = st.container(border=True)
