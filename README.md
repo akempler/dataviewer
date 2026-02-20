@@ -15,6 +15,15 @@ Provides some standard data insight:
 
 https://simple-dataviewer.streamlit.app/
 
+## Install locally:
+
+```
+uv venv --python 3.11
+source .venv/bin/activate
+uv pip install -r requirements.txt
+streamlit run app.py
+```
+
 ## TODO
 
 - Json Explorer for working with nested json files. (in progress)
