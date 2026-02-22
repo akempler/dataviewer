@@ -1,10 +1,6 @@
-import streamlit as st
-import os
-import pandas as pd
-from pandas import json_normalize
-import numpy as np
-import json
+"""Help module - not currently in use."""
 
-st.write("Help is on the way.")
 
-# Not currently in use.
+def show_help():
+    """Placeholder for future help functionality."""
+    print("Help is on the way.")
