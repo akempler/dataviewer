@@ -158,13 +158,16 @@ if "dataframe" in locals():
   if page == "Sampling":
     with st.form("sampling"):
       st.subheader("Data Sampler")
-      # Show a sampling of the data.
       sampling_number = st.number_input('Number of records to sample', min_value=1, max_value=500, value=5)
+      random_sampling = st.checkbox('Random Sampling', value=True, help='When checked, sample random rows. When unchecked, use the first N rows.')
 
       submitted = st.form_submit_button("Create Sample Data")
 
       if submitted:
-        sampling = dataframe.sample(sampling_number)
+        if random_sampling:
+          sampling = dataframe.sample(sampling_number)
+        else:
+          sampling = dataframe.head(sampling_number)
         st.write(sampling)
 
   if page == "Data Dictionary":
