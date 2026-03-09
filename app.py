@@ -138,8 +138,13 @@ with st.sidebar:
         st.session_state.current_filename = None
 
     # New project button (collapsed after creation so success message is visible)
+    # Use a counter for the form key so the field is empty after each successful create
+    if "new_project_form_key" not in st.session_state:
+        st.session_state.new_project_form_key = 0
     with st.expander("Create new project", expanded=False):
-        new_project_name = st.text_input("Project name", key="new_project_name")
+        new_project_name = st.text_input(
+            "Project name", key=f"new_project_name_{st.session_state.new_project_form_key}"
+        )
         if st.button("Create project"):
             if new_project_name and new_project_name.strip():
                 try:
@@ -147,6 +152,7 @@ with st.sidebar:
                     new_project_id = db.create_project(project_name)
                     st.session_state.current_project_id = new_project_id
                     st.session_state.project_created_success = project_name
+                    st.session_state.new_project_form_key += 1
                     st.rerun()
                 except ValueError as e:
                     st.error(str(e))
