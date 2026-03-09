@@ -26,6 +26,8 @@ if "json_file" not in st.session_state:
     st.session_state.json_file = None
 if "current_filename" not in st.session_state:
     st.session_state.current_filename = None
+if "project_created_success" not in st.session_state:
+    st.session_state.project_created_success = None
 
 menu = [
     "Overview",
@@ -95,6 +97,10 @@ with st.sidebar:
     heading = '<h1 class="sidebar_title"><span class="material-symbols-outlined">data_table</span>Data Viewer</h1>'
     st.sidebar.markdown(heading, unsafe_allow_html=True)
 
+    # Success message after project creation (persists after rerun, expander collapsed)
+    if st.session_state.project_created_success:
+        st.success(f"Project '{st.session_state.project_created_success}' created.")
+
     # Project picker
     db.init_db()
     projects = db.list_projects()
@@ -131,19 +137,25 @@ with st.sidebar:
         st.session_state.json_file = None
         st.session_state.current_filename = None
 
-    # New project button
-    with st.expander("Create new project"):
+    # New project button (collapsed after creation so success message is visible)
+    with st.expander("Create new project", expanded=False):
         new_project_name = st.text_input("Project name", key="new_project_name")
         if st.button("Create project"):
             if new_project_name and new_project_name.strip():
                 try:
-                    db.create_project(new_project_name.strip())
-                    st.success(f"Project '{new_project_name.strip()}' created.")
+                    project_name = new_project_name.strip()
+                    new_project_id = db.create_project(project_name)
+                    st.session_state.current_project_id = new_project_id
+                    st.session_state.project_created_success = project_name
                     st.rerun()
                 except ValueError as e:
                     st.error(str(e))
             else:
                 st.warning("Enter a project name.")
+
+    # Clear success message after it has been displayed
+    if st.session_state.project_created_success:
+        st.session_state.project_created_success = None
 
     # Delete project (only when project selected)
     if st.session_state.current_project_id is not None:
