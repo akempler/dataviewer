@@ -291,17 +291,73 @@ if dataframe is not None:
 
         st.write("Record count: ", dataframe.shape[0])
 
+        # Search panel
+        params = st.session_state.get("overview_search_params")
+        with st.container(border=False):
+            st.markdown("**Search:**")
+            with st.form("overview_search"):
+                col_options = ["-- Select a column --"] + list(dataframe.columns)
+                col_default_idx = (
+                    col_options.index(params["col"])
+                    if params and params["col"] in col_options
+                    else 0
+                )
+                col_sel = st.selectbox(
+                    "Search in column:",
+                    col_options,
+                    index=col_default_idx,
+                    key="overview_search_col",
+                )
+                search_val = st.text_input(
+                    "Search for",
+                    value=params["val"] if params else "",
+                    placeholder="e.g. insurance or 11235",
+                    key="overview_search_val",
+                )
+                match_mode = st.radio(
+                    "Match:",
+                    ["Contains", "Exact"],
+                    horizontal=True,
+                    index=1 if params and params.get("mode") == "Exact" else 0,
+                    key="overview_match_mode",
+                )
+                submitted = st.form_submit_button("Search")
+
+            if submitted:
+                if search_val and col_sel != "-- Select a column --":
+                    st.session_state.overview_search_params = {
+                        "col": col_sel,
+                        "val": search_val,
+                        "mode": match_mode,
+                    }
+                else:
+                    st.session_state.overview_search_params = None
+
+        # Apply filter if search was submitted with valid params
+        display_df = dataframe
+        params = st.session_state.get("overview_search_params")
+        if params and params["val"] and len(dataframe) > 0:
+            col_str = dataframe[params["col"]].astype(str)
+            if params["mode"] == "Contains":
+                mask = col_str.str.contains(
+                    params["val"], case=False, na=False
+                )
+            else:
+                mask = col_str == params["val"]
+            display_df = dataframe[mask]
+            st.write("Filtered: ", len(display_df), " records")
+
         if json_file is not None:
             tab1, tab2 = st.tabs(["Data Table", "Raw Json"])
             with tab1:
                 st.write("Column count: ", dataframe.shape[1])
-                st.write(dataframe)
+                st.write(display_df)
 
             with tab2:
                 st.json(json_file, expanded=False)
         else:
             st.write("Column count: ", dataframe.shape[1])
-            st.write(dataframe)
+            st.write(display_df)
 
     if page == "Duplicates":
         with st.form("duplicate"):
