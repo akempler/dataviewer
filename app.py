@@ -291,17 +291,41 @@ if dataframe is not None:
 
         st.write("Record count: ", dataframe.shape[0])
 
+        # Search panel
+        col_sel = st.selectbox(
+            "Search in column", dataframe.columns, key="overview_search_col"
+        )
+        search_val = st.text_input(
+            "Search for",
+            placeholder="e.g. insurance or 11235",
+            key="overview_search_val",
+        )
+        match_mode = st.radio(
+            "Match", ["Contains", "Exact"], horizontal=True, key="overview_match_mode"
+        )
+
+        # Apply filter if search value provided
+        display_df = dataframe
+        if search_val and len(dataframe) > 0:
+            col_str = dataframe[col_sel].astype(str)
+            if match_mode == "Contains":
+                mask = col_str.str.contains(search_val, case=False, na=False)
+            else:
+                mask = col_str == search_val
+            display_df = dataframe[mask]
+            st.write("Filtered: ", len(display_df), " records")
+
         if json_file is not None:
             tab1, tab2 = st.tabs(["Data Table", "Raw Json"])
             with tab1:
                 st.write("Column count: ", dataframe.shape[1])
-                st.write(dataframe)
+                st.write(display_df)
 
             with tab2:
                 st.json(json_file, expanded=False)
         else:
             st.write("Column count: ", dataframe.shape[1])
-            st.write(dataframe)
+            st.write(display_df)
 
     if page == "Duplicates":
         with st.form("duplicate"):
