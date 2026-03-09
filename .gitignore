@@ -53,3 +53,7 @@ agent/venv/
 agent/__pycache__/
 agent/.venv/
 __pycache__/
+
+# dataviewer
+dataviewer.db
+data/
