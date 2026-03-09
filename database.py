@@ -102,7 +102,7 @@ def get_project(project_id: int) -> tuple[str, str] | None:
 
 
 def add_file(project_id: int, filename: str, data: bytes) -> int:
-    """Save file to data/<slug>/<filename>, insert file row, return file id."""
+    """Save file to data/<slug>/<filename>. Overwrites existing file with same name."""
     init_db()
     project = get_project(project_id)
     if not project:
@@ -112,28 +112,48 @@ def add_file(project_id: int, filename: str, data: bytes) -> int:
     project_dir = DATA_DIR / slug
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    # Use unique filename if duplicate (name_timestamp.ext)
-    base_path = project_dir / filename
-    if base_path.exists():
-        stem = base_path.stem
-        suffix = base_path.suffix
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        filename = f"{stem}_{timestamp}{suffix}"
-
-    file_path = f"data/{slug}/{filename}"
-    full_path = DATA_DIR / slug / filename
-    full_path.write_bytes(data)
-
-    created_at = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Check for existing files with same base name (exact or timestamped variant)
+    stem, suffix = Path(filename).stem, Path(filename).suffix
+    pattern = f"{stem}_%{suffix}"  # e.g. OccupationDataSample_%.csv
     conn = _get_conn()
     try:
-        cursor = conn.execute(
-            "INSERT INTO files (project_id, filename, file_path, uploaded_at) VALUES (?, ?, ?, ?)",
-            (project_id, filename, file_path, created_at),
-        )
-        file_id = cursor.lastrowid
-        conn.commit()
-        return file_id
+        existing_list = conn.execute(
+            "SELECT id, file_path FROM files WHERE project_id = ? AND (filename = ? OR filename LIKE ?)",
+            (project_id, filename, pattern),
+        ).fetchall()
+
+        file_path = f"data/{slug}/{filename}"
+        full_path = DATA_DIR / slug / filename
+        full_path.write_bytes(data)
+
+        if existing_list:
+            # Keep first record, update it; delete others and their files
+            file_id, _ = existing_list[0]
+            conn.execute(
+                "UPDATE files SET filename = ?, file_path = ?, uploaded_at = ? WHERE id = ?",
+                (filename, file_path, datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"), file_id),
+            )
+            # Delete other matching records and remove their files from disk
+            for fid, old_path in existing_list[1:]:
+                conn.execute("DELETE FROM files WHERE id = ?", (fid,))
+                old_full = Path(__file__).parent / old_path
+                if old_full.exists():
+                    old_full.unlink()
+            # Remove old file for the kept record if path changed
+            if existing_list[0][1] != file_path:
+                old_full = Path(__file__).parent / existing_list[0][1]
+                if old_full.exists():
+                    old_full.unlink()
+            conn.commit()
+            return file_id
+        else:
+            cursor = conn.execute(
+                "INSERT INTO files (project_id, filename, file_path, uploaded_at) VALUES (?, ?, ?, ?)",
+                (project_id, filename, file_path, datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")),
+            )
+            file_id = cursor.lastrowid
+            conn.commit()
+            return file_id
     finally:
         conn.close()
 

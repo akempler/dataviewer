@@ -219,33 +219,49 @@ with st.sidebar:
         )
 
         if uploaded_file is not None:
-            df, jf = load_file_from_upload(uploaded_file)
-            if df is not None:
-                # Save to project and load
-                try:
-                    uploaded_file.seek(0)
-                    data = uploaded_file.getvalue()
-                    db.add_file(
-                        st.session_state.current_project_id,
-                        uploaded_file.name,
-                        data,
-                    )
-                    st.session_state.dataframe = df
-                    st.session_state.json_file = jf
-                    st.session_state.current_filename = uploaded_file.name
-                    # Resolve path for selected file (newly added)
-                    project_files = db.list_files(st.session_state.current_project_id)
-                    for fid, fname, fpath in project_files:
-                        if fname == uploaded_file.name:
-                            st.session_state.selected_file_path = db.get_file_path(
-                                fid
-                            )
-                            break
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Failed to save file: {e}")
+            # Only process each upload once - Streamlit reruns keep the file in memory,
+            # which would otherwise trigger add_file on every rerun and create duplicates.
+            upload_signature = (
+                uploaded_file.name,
+                uploaded_file.size,
+                st.session_state.current_project_id,
+            )
+            if st.session_state.get("last_processed_upload") == upload_signature:
+                pass  # Already processed this upload, skip to avoid duplicates
             else:
-                st.write("File type not supported")
+                df, jf = load_file_from_upload(uploaded_file)
+                if df is not None:
+                    # Save to project and load
+                    try:
+                        uploaded_file.seek(0)
+                        data = uploaded_file.getvalue()
+                        db.add_file(
+                            st.session_state.current_project_id,
+                            uploaded_file.name,
+                            data,
+                        )
+                        st.session_state.last_processed_upload = upload_signature
+                        st.session_state.dataframe = df
+                        st.session_state.json_file = jf
+                        st.session_state.current_filename = uploaded_file.name
+                        # Resolve path for selected file (newly added)
+                        project_files = db.list_files(
+                            st.session_state.current_project_id
+                        )
+                        for fid, fname, fpath in project_files:
+                            if fname == uploaded_file.name:
+                                st.session_state.selected_file_path = db.get_file_path(
+                                    fid
+                                )
+                                break
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Failed to save file: {e}")
+                else:
+                    st.write("File type not supported")
+        else:
+            # Clear processed-upload tracking when user clears the file picker
+            st.session_state.pop("last_processed_upload", None)
     else:
         st.info("Create or select a project to get started.")
 
