@@ -211,11 +211,12 @@ with st.sidebar:
                         st.session_state.selected_file_path = abs_path
                         st.session_state.current_filename = selected_file_name
 
-        # Upload new file
+        # Upload new file - key includes project_id so switching projects clears the
+        # uploader and prevents the same file from being saved to multiple projects
         uploaded_file = st.file_uploader(
             "Upload a file:",
             type=["csv", "json", "xlsx"],
-            key="file_uploader",
+            key=f"file_uploader_{st.session_state.current_project_id}",
         )
 
         if uploaded_file is not None:
