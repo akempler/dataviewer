@@ -1,3 +1,4 @@
+import re
 import streamlit as st
 import pandas as pd
 from pandas import json_normalize
@@ -311,9 +312,10 @@ if dataframe is not None:
                 search_val = st.text_input(
                     "Search for",
                     value=params["val"] if params else "",
-                    placeholder="e.g. insurance or 11235",
+                    placeholder="e.g. 15-1254.00 OR 5-1251.00",
                     key="overview_search_val",
                 )
+                st.caption("Separate multiple terms with OR to match any of them.")
                 match_mode = st.radio(
                     "Match:",
                     ["Contains", "Exact"],
@@ -337,14 +339,26 @@ if dataframe is not None:
         display_df = dataframe
         params = st.session_state.get("overview_search_params")
         if params and params["val"] and len(dataframe) > 0:
-            col_str = dataframe[params["col"]].astype(str)
-            if params["mode"] == "Contains":
-                mask = col_str.str.contains(
-                    params["val"], case=False, na=False
-                )
-            else:
-                mask = col_str == params["val"]
-            display_df = dataframe[mask]
+            terms = [
+                t.strip()
+                for t in re.split(r"\s+or\s+", params["val"], flags=re.IGNORECASE)
+                if t.strip()
+            ]
+            if terms:
+                col_str = dataframe[params["col"]].astype(str)
+                if params["mode"] == "Contains":
+                    mask = col_str.str.contains(
+                        terms[0], case=False, na=False, regex=False
+                    )
+                    for term in terms[1:]:
+                        mask = mask | col_str.str.contains(
+                            term, case=False, na=False, regex=False
+                        )
+                else:
+                    mask = col_str == terms[0]
+                    for term in terms[1:]:
+                        mask = mask | (col_str == term)
+                display_df = dataframe[mask]
             st.write("Filtered: ", len(display_df), " records")
 
         if json_file is not None:
