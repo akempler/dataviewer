@@ -326,7 +326,7 @@ if dataframe is not None:
                     index=1 if params and params.get("mode") == "Exact" else 0,
                     key=f"overview_match_mode_{form_key}",
                 )
-                btn_col1, btn_col2 = st.columns(2)
+                btn_col1, btn_col2, _ = st.columns([1, 1, 8])
                 with btn_col1:
                     submitted = st.form_submit_button("Search")
                 with btn_col2:
