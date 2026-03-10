@@ -213,6 +213,11 @@ with st.sidebar:
                 if abs_path:
                     df, jf = load_file_from_path(abs_path)
                     if df is not None:
+                        if st.session_state.current_filename != selected_file_name:
+                            # File changed - reset Overview search
+                            st.session_state.overview_search_params = None
+                            if "overview_search_form_key" in st.session_state:
+                                st.session_state.overview_search_form_key += 1
                         st.session_state.dataframe = df
                         st.session_state.json_file = jf
                         st.session_state.selected_file_path = abs_path
