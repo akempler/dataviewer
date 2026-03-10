@@ -252,6 +252,10 @@ with st.sidebar:
                         st.session_state.dataframe = df
                         st.session_state.json_file = jf
                         st.session_state.current_filename = uploaded_file.name
+                        # Reset Overview search when new file is loaded
+                        st.session_state.overview_search_params = None
+                        if "overview_search_form_key" in st.session_state:
+                            st.session_state.overview_search_form_key += 1
                         # Resolve path for selected file (newly added)
                         project_files = db.list_files(
                             st.session_state.current_project_id
