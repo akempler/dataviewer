@@ -293,27 +293,30 @@ if dataframe is not None:
         st.write("Record count: ", dataframe.shape[0])
 
         # Search panel
+        if "overview_search_form_key" not in st.session_state:
+            st.session_state.overview_search_form_key = 0
         params = st.session_state.get("overview_search_params")
         with st.container(border=False):
             st.markdown("**Search:**")
-            with st.form("overview_search"):
+            with st.form(key=f"overview_search_{st.session_state.overview_search_form_key}"):
                 col_options = ["-- Select a column --"] + list(dataframe.columns)
                 col_default_idx = (
                     col_options.index(params["col"])
                     if params and params["col"] in col_options
                     else 0
                 )
+                form_key = st.session_state.overview_search_form_key
                 col_sel = st.selectbox(
                     "Search in column:",
                     col_options,
                     index=col_default_idx,
-                    key="overview_search_col",
+                    key=f"overview_search_col_{form_key}",
                 )
                 search_val = st.text_input(
                     "Search for",
                     value=params["val"] if params else "",
                     placeholder="e.g. 15-1254.00 OR 5-1251.00",
-                    key="overview_search_val",
+                    key=f"overview_search_val_{form_key}",
                 )
                 st.caption("Separate multiple terms with OR to match any of them.")
                 match_mode = st.radio(
@@ -321,10 +324,18 @@ if dataframe is not None:
                     ["Contains", "Exact"],
                     horizontal=True,
                     index=1 if params and params.get("mode") == "Exact" else 0,
-                    key="overview_match_mode",
+                    key=f"overview_match_mode_{form_key}",
                 )
-                submitted = st.form_submit_button("Search")
+                btn_col1, btn_col2 = st.columns(2)
+                with btn_col1:
+                    submitted = st.form_submit_button("Search")
+                with btn_col2:
+                    reset = st.form_submit_button("Reset")
 
+            if reset:
+                st.session_state.overview_search_params = None
+                st.session_state.overview_search_form_key += 1
+                st.rerun()
             if submitted:
                 if search_val and col_sel != "-- Select a column --":
                     st.session_state.overview_search_params = {
